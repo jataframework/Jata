@@ -36,7 +36,7 @@ public class Jata {
     
 
 
-    
+/*    
     static Map<String, Object> singletonMap = new HashMap();
     public static <T> T get(Class<T> ct) {
         if (!singletonMap.containsKey(ct.getName())) {
@@ -45,7 +45,7 @@ public class Jata {
         return (T)singletonMap.get(ct.getName());
     }
 
-
+*/
     
     
     

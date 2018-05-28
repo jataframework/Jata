@@ -16,5 +16,5 @@ import java.lang.annotation.RetentionPolicy;
 public @interface Database {
     
     String value();
-    String table() default "";
+    String entity() default "";
 }

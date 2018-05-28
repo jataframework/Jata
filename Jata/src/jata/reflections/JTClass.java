@@ -2,20 +2,34 @@ package jata.reflections;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
+import jata.repository.DBField;
 
 public class JTClass {
 	
 	
+	static Map<Class<?>, Object> ctMap = new HashMap();
+	public static <T> T get(Class<T> ct) {
+		if (!ctMap.containsKey(ct)) {
+			ctMap.put(ct, newInstance(ct));
+		}
+		return (T) ctMap.get(ct);
+	}
 	
 	
 	Class<?> ct;
-	List<Field> fieldList = new LinkedList();
-	List<Method> methodList = new LinkedList();
+	List<JTField> fieldList = null;
+	List<Method> methodList = null;
 	
 	
-	public List<Field> getFieldList() {
+	public List<JTField> getFieldList() {
 		return fieldList;
 	}
 	
@@ -32,7 +46,7 @@ public class JTClass {
 	
 	
 	void init() {
-		fieldList.addAll(Arrays.asList(ct.getFields()));
+		fieldList = getFields(ct);
 		methodList.addAll(Arrays.asList(ct.getMethods()));
 	}
 	
@@ -48,8 +62,12 @@ public class JTClass {
 	
 	
 	
-	
-	
+	static Map<Class<?>, List<JTField>> fieldMap = new HashMap();
+	public static List<JTField> getFields(Class<?> ct) {
+		if (!fieldMap.containsKey(ct))
+			fieldMap.put(ct, Arrays.asList(ct.getDeclaredFields()).stream().map(field->JTField.create(field)).collect(Collectors.toList()));
+		return fieldMap.get(ct);
+	}
 	
 
     public static Class<?> getParaClassFromMethod(Method method) {
@@ -78,5 +96,51 @@ public class JTClass {
         }
     }    
 	
+    
+    
+    static Map<String, Constructor> constructorMap = new HashMap();
+    public static Constructor getConstructor(Class<?> ct) {
+        if (!constructorMap.containsKey(ct.getName())) {
+            for (Constructor c : ct.getDeclaredConstructors()) {
+                if (c.getGenericParameterTypes().length == 0) {
+                    constructorMap.put(ct.getName(), c);
+                    break;
+                }
+            }
+        }
+        return constructorMap.get(ct.getName());
+    }
+	
 
+	
+	
+    public static <T> T newInstance(Class<T> ct) {
+		try {
+			return (T)getConstructor(ct).newInstance();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+				| InvocationTargetException e) {
+			e.printStackTrace();
+			return null;
+		}
+    }	    
+
+    
+
+    
+    
+    
+    public static Map<String, Object> getValueMap(Object o) {
+    	List<JTField> fieldList = getFields(o.getClass());
+    	return fieldList.stream().collect(Collectors.toMap(field->field.getName(), field->field.getValue(o)));
+    }
+    
+    
+    public static Map<String, Object> getValueMap(Object o, Class<?> ct) {
+    	List<JTField> fieldList = getFields(ct);
+    	return fieldList.stream().collect(Collectors.toMap(field->field.getName(), field->field.getValue(o)));
+    }
+    
+    
+   
+    
 }
